@@ -1,0 +1,1961 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart City Road Network Planner</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Share+Tech+Mono&family=Exo+2:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #020b18;
+        --panel: #041220;
+        --border: #0a3a5c;
+        --accent: #00d4ff;
+        --accent2: #ff6b35;
+        --accent3: #39ff14;
+        --accent4: #ffcc00;
+        --text: #c8e8f8;
+        --muted: #4a7a9b;
+        --edge-normal: #1a4a6a;
+        --node-fill: #0a2535;
+        --glow: 0 0 12px rgba(0, 212, 255, 0.6);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Exo 2", sans-serif;
+        min-height: 100vh;
+        overflow-x: hidden;
+        background-image:
+          radial-gradient(
+            ellipse 80% 40% at 50% 0%,
+            rgba(0, 80, 160, 0.15) 0%,
+            transparent 70%
+          ),
+          repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 39px,
+            rgba(0, 60, 100, 0.08) 39px,
+            rgba(0, 60, 100, 0.08) 40px
+          ),
+          repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 39px,
+            rgba(0, 60, 100, 0.08) 39px,
+            rgba(0, 60, 100, 0.08) 40px
+          );
+      }
+
+      header {
+        padding: 18px 32px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        background: rgba(4, 18, 32, 0.95);
+        backdrop-filter: blur(10px);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .logo-icon {
+        width: 44px;
+        height: 44px;
+        background: linear-gradient(135deg, var(--accent), #006a80);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        box-shadow: var(--glow);
+      }
+
+      header h1 {
+        font-family: "Orbitron", monospace;
+        font-size: 1.25rem;
+        font-weight: 800;
+        letter-spacing: 2px;
+        color: var(--accent);
+        text-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+      }
+
+      header p {
+        font-size: 0.75rem;
+        color: var(--muted);
+        letter-spacing: 1px;
+        font-family: "Share Tech Mono", monospace;
+      }
+
+      .badge {
+        margin-left: auto;
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        color: var(--accent);
+        font-family: "Share Tech Mono", monospace;
+        font-size: 0.65rem;
+        padding: 4px 10px;
+        border-radius: 3px;
+        letter-spacing: 2px;
+      }
+
+      .main-layout {
+        display: grid;
+        grid-template-columns: 280px 1fr 300px;
+        gap: 0;
+        height: calc(100vh - 73px);
+      }
+
+      /* SIDEBAR LEFT */
+      .sidebar {
+        background: var(--panel);
+        border-right: 1px solid var(--border);
+        padding: 20px 16px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .section-label {
+        font-family: "Orbitron", monospace;
+        font-size: 0.6rem;
+        letter-spacing: 3px;
+        color: var(--muted);
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .section-label::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+      }
+
+      .btn {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid var(--border);
+        background: rgba(0, 212, 255, 0.05);
+        color: var(--text);
+        font-family: "Share Tech Mono", monospace;
+        font-size: 0.78rem;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: all 0.2s;
+        text-align: left;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .btn:hover {
+        background: rgba(0, 212, 255, 0.12);
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .btn.active {
+        background: rgba(0, 212, 255, 0.15);
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .btn.primary {
+        background: linear-gradient(
+          135deg,
+          rgba(0, 212, 255, 0.2),
+          rgba(0, 106, 128, 0.2)
+        );
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .btn.run {
+        background: linear-gradient(
+          135deg,
+          rgba(57, 255, 20, 0.15),
+          rgba(0, 80, 0, 0.1)
+        );
+        border-color: var(--accent3);
+        color: var(--accent3);
+        font-weight: 600;
+      }
+      .btn.run:hover {
+        background: rgba(57, 255, 20, 0.25);
+      }
+      .btn.danger {
+        border-color: #ff4444;
+        color: #ff4444;
+        background: rgba(255, 68, 68, 0.05);
+      }
+      .btn.danger:hover {
+        background: rgba(255, 68, 68, 0.15);
+      }
+      .btn.kruskal-btn {
+        border-color: var(--accent2);
+        color: var(--accent2);
+        background: rgba(255, 107, 53, 0.07);
+      }
+      .btn.kruskal-btn:hover {
+        background: rgba(255, 107, 53, 0.18);
+      }
+
+      .algo-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .speed-control {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .speed-control label {
+        font-size: 0.72rem;
+        color: var(--muted);
+        font-family: "Share Tech Mono", monospace;
+      }
+      input[type="range"] {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 4px;
+        background: var(--border);
+        border-radius: 2px;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 14px;
+        height: 14px;
+        background: var(--accent);
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 0 6px var(--accent);
+      }
+
+      /* CANVAS AREA */
+      .canvas-area {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .canvas-toolbar {
+        background: rgba(4, 18, 32, 0.9);
+        border-bottom: 1px solid var(--border);
+        padding: 8px 16px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .toolbar-btn {
+        padding: 5px 12px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--muted);
+        font-family: "Share Tech Mono", monospace;
+        font-size: 0.7rem;
+        cursor: pointer;
+        border-radius: 3px;
+        transition: all 0.2s;
+        letter-spacing: 0.5px;
+      }
+      .toolbar-btn:hover {
+        color: var(--text);
+        border-color: var(--muted);
+      }
+      .toolbar-btn.active {
+        background: rgba(0, 212, 255, 0.1);
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .canvas-hint {
+        margin-left: auto;
+        font-family: "Share Tech Mono", monospace;
+        font-size: 0.65rem;
+        color: var(--muted);
+        letter-spacing: 1px;
+      }
+
+      #network-canvas {
+        flex: 1;
+        display: block;
+        cursor: crosshair;
+      }
+
+      /* RIGHT PANEL */
+      .right-panel {
+        background: var(--panel);
+        border-left: 1px solid var(--border);
+        padding: 20px 16px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .stat-card {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 14px;
+      }
+      .stat-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+        border-bottom: 1px solid rgba(10, 58, 92, 0.4);
+        font-size: 0.75rem;
+      }
+      .stat-row:last-child {
+        border-bottom: none;
+      }
+      .stat-key {
+        color: var(--muted);
+        font-family: "Share Tech Mono", monospace;
+      }
+      .stat-val {
+        color: var(--accent);
+        font-family: "Orbitron", monospace;
+        font-size: 0.8rem;
+        font-weight: 600;
+      }
+      .stat-val.green {
+        color: var(--accent3);
+      }
+      .stat-val.orange {
+        color: var(--accent2);
+      }
+
+      .log-area {
+        background: #010a12;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 12px;
+        font-family: "Share Tech Mono", monospace;
+        font-size: 0.68rem;
+        line-height: 1.7;
+        color: var(--muted);
+        max-height: 220px;
+        overflow-y: auto;
+        flex: 1;
+      }
+      .log-area .log-line {
+        display: block;
+      }
+      .log-area .log-line.info {
+        color: var(--accent);
+      }
+      .log-area .log-line.success {
+        color: var(--accent3);
+      }
+      .log-area .log-line.warn {
+        color: var(--accent4);
+      }
+      .log-area .log-line.edge {
+        color: #a0cce0;
+      }
+
+      .complexity-box {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 14px;
+      }
+      .complexity-title {
+        font-family: "Orbitron", monospace;
+        font-size: 0.7rem;
+        color: var(--accent);
+        letter-spacing: 2px;
+        margin-bottom: 10px;
+      }
+      .complexity-item {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        padding: 5px 0;
+        border-bottom: 1px solid rgba(10, 58, 92, 0.3);
+        font-size: 0.72rem;
+      }
+      .complexity-item:last-child {
+        border-bottom: none;
+      }
+      .algo-name {
+        color: var(--text);
+        min-width: 80px;
+      }
+      .time-val {
+        color: var(--accent4);
+        font-family: "Share Tech Mono", monospace;
+        font-size: 0.8rem;
+      }
+      .space-val {
+        color: var(--muted);
+        font-family: "Share Tech Mono", monospace;
+        font-size: 0.68rem;
+      }
+
+      .edge-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.7rem;
+      }
+      .edge-table th {
+        background: rgba(0, 212, 255, 0.08);
+        color: var(--accent);
+        font-family: "Orbitron", monospace;
+        font-size: 0.6rem;
+        letter-spacing: 1px;
+        padding: 6px 8px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+      }
+      .edge-table td {
+        padding: 5px 8px;
+        border-bottom: 1px solid rgba(10, 58, 92, 0.2);
+        font-family: "Share Tech Mono", monospace;
+        color: var(--text);
+      }
+      .edge-table tr.mst-edge td {
+        color: var(--accent3);
+        background: rgba(57, 255, 20, 0.04);
+      }
+      .edge-table tr.mst-edge.kruskal td {
+        color: var(--accent2);
+        background: rgba(255, 107, 53, 0.04);
+      }
+
+      .progress-bar {
+        height: 3px;
+        background: var(--border);
+        border-radius: 2px;
+        overflow: hidden;
+        margin-top: 4px;
+      }
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent), var(--accent3));
+        border-radius: 2px;
+        transition: width 0.3s ease;
+        width: 0%;
+      }
+
+      /* Modal */
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 200;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal-overlay.show {
+        display: flex;
+      }
+      .modal {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 28px;
+        max-width: 480px;
+        width: 90%;
+        box-shadow: 0 0 40px rgba(0, 212, 255, 0.2);
+      }
+      .modal h3 {
+        font-family: "Orbitron", monospace;
+        font-size: 0.9rem;
+        color: var(--accent);
+        letter-spacing: 2px;
+        margin-bottom: 16px;
+      }
+      .form-row {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 14px;
+      }
+      .form-row label {
+        font-size: 0.72rem;
+        color: var(--muted);
+        font-family: "Share Tech Mono", monospace;
+      }
+      .form-row input {
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 8px 10px;
+        border-radius: 4px;
+        font-family: "Share Tech Mono", monospace;
+        font-size: 0.8rem;
+        outline: none;
+      }
+      .form-row input:focus {
+        border-color: var(--accent);
+      }
+      .helper-text {
+        font-size: 0.65rem;
+        color: var(--muted);
+        font-family: "Share Tech Mono", monospace;
+      }
+      .modal-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 18px;
+      }
+      .modal-actions .btn {
+        width: auto;
+        padding: 8px 18px;
+      }
+
+      /* Tooltip */
+      .tooltip {
+        position: absolute;
+        background: rgba(4, 18, 32, 0.95);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 8px 12px;
+        font-family: "Share Tech Mono", monospace;
+        font-size: 0.68rem;
+        color: var(--text);
+        pointer-events: none;
+        display: none;
+        z-index: 50;
+        white-space: nowrap;
+      }
+
+      .mode-indicator {
+        font-family: "Share Tech Mono", monospace;
+        font-size: 0.68rem;
+        color: var(--accent4);
+        letter-spacing: 1px;
+      }
+
+      @keyframes pulse-glow {
+        0%,
+        100% {
+          filter: drop-shadow(0 0 4px rgba(0, 212, 255, 0.8));
+        }
+        50% {
+          filter: drop-shadow(0 0 12px rgba(0, 212, 255, 1));
+        }
+      }
+      @keyframes mst-draw {
+        from {
+          stroke-dashoffset: 200;
+        }
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+
+      ::-webkit-scrollbar {
+        width: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 2px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="logo-icon">🌐</div>
+      <div>
+        <h1>SMART CITY NETWORK PLANNER</h1>
+        <p>MINIMUM SPANNING TREE · SENSOR GRID OPTIMIZATION</p>
+      </div>
+      <!-- <div class="badge">v2.0 · MST ENGINE</div> -->
+    </header>
+
+    <div class="main-layout">
+      <!-- LEFT SIDEBAR -->
+      <div class="sidebar">
+        <div>
+          <div class="section-label">Graph Mode</div>
+          <div class="algo-group">
+            <button
+              class="btn active"
+              id="btn-add-node"
+              onclick="setMode('node')"
+            >
+              📍 Add Sensor Node
+            </button>
+            <button class="btn" id="btn-add-edge" onclick="setMode('edge')">
+              🔗 Add Connection
+            </button>
+            <button class="btn danger" onclick="setMode('delete')">
+              🗑 Delete Element
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-label">Algorithms</div>
+          <div class="algo-group">
+            <button class="btn run" onclick="runAlgo('prim')">
+              ▶ Run Prim's (MST)
+            </button>
+            <button class="btn kruskal-btn" onclick="runAlgo('kruskal')">
+              ▶ Run Kruskal's (MST)
+            </button>
+            <button class="btn" onclick="runAlgo('brute')">
+              ▶ Brute Force
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-label">Animation Speed</div>
+          <div class="speed-control">
+            <label>DELAY: <span id="speed-label">600ms</span></label>
+            <input
+              type="range"
+              id="speed-slider"
+              min="100"
+              max="2000"
+              value="600"
+              step="100"
+              oninput="
+                animSpeed = parseInt(this.value);
+                document.getElementById('speed-label').textContent =
+                  this.value + 'ms';
+              "
+            />
+          </div>
+        </div>
+
+        <div>
+          <div class="section-label">Presets</div>
+          <div class="algo-group">
+            <button class="btn primary" onclick="loadPreset('city')">
+              🏙 City Grid (8 nodes)
+            </button>
+            <button class="btn primary" onclick="loadPreset('star')">
+              ⭐ Hub & Spoke
+            </button>
+            <button class="btn primary" onclick="openRandomPresetModal()">
+              🎲 Random Graph
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-label">Controls</div>
+          <div class="algo-group">
+            <button class="btn" onclick="resetMST()">↺ Reset Highlights</button>
+            <button class="btn danger" onclick="clearAll()">✕ Clear All</button>
+          </div>
+        </div>
+
+        <div style="margin-top: auto">
+          <div class="section-label">Status</div>
+          <div
+            style="
+              font-family: &quot;Share Tech Mono&quot;, monospace;
+              font-size: 0.68rem;
+              line-height: 1.8;
+              color: var(--muted);
+            "
+          >
+            <div>
+              MODE:
+              <span id="mode-display" style="color: var(--accent)"
+                >ADD NODE</span
+              >
+            </div>
+            <div>
+              NODES: <span id="node-count" style="color: var(--text)">0</span>
+            </div>
+            <div>
+              EDGES: <span id="edge-count" style="color: var(--text)">0</span>
+            </div>
+            <div>
+              MST COST:
+              <span id="mst-cost-sidebar" style="color: var(--accent3)">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CANVAS -->
+      <div class="canvas-area">
+        <div class="canvas-toolbar">
+          <button class="toolbar-btn" onclick="zoomIn()">＋ Zoom In</button>
+          <button class="toolbar-btn" onclick="zoomOut()">－ Zoom Out</button>
+          <button class="toolbar-btn" onclick="resetZoom()">⊙ Fit</button>
+          <div class="canvas-hint" id="canvas-hint">
+            Click to place sensor nodes
+          </div>
+          <span class="mode-indicator" id="running-label"></span>
+        </div>
+        <canvas id="network-canvas"></canvas>
+        <div class="tooltip" id="tooltip"></div>
+      </div>
+
+      <!-- RIGHT PANEL -->
+      <div class="right-panel">
+        <div>
+          <div class="section-label">Results</div>
+          <div class="stat-card">
+            <div class="stat-row">
+              <span class="stat-key">ALGORITHM</span>
+              <span class="stat-val" id="res-algo">—</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-key">MST COST</span>
+              <span class="stat-val green" id="res-cost">—</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-key">MST EDGES</span>
+              <span class="stat-val" id="res-edges">—</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-key">STEPS</span>
+              <span class="stat-val" id="res-steps">—</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-key">TIME</span>
+              <span class="stat-val orange" id="res-time">—</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="progress-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-label">Complexity Analysis</div>
+          <div class="complexity-box">
+            <div class="complexity-title">TIME & SPACE COMPLEXITY</div>
+            <div class="complexity-item">
+              <span class="algo-name">Prim's</span>
+              <span class="time-val">O(E log V)</span>
+              <span class="space-val">O(V+E)</span>
+            </div>
+            <div class="complexity-item">
+              <span class="algo-name">Kruskal's</span>
+              <span class="time-val">O(E log E)</span>
+              <span class="space-val">O(V+E)</span>
+            </div>
+            <div class="complexity-item">
+              <span class="algo-name">Brute Force</span>
+              <span class="time-val">O(V^V)</span>
+              <span class="space-val">O(V²)</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-label">MST Edges</div>
+          <div
+            style="
+              max-height: 160px;
+              overflow-y: auto;
+              border: 1px solid var(--border);
+              border-radius: 4px;
+            "
+          >
+            <table class="edge-table" id="edge-table">
+              <thead>
+                <tr>
+                  <th>FROM</th>
+                  <th>TO</th>
+                  <th>COST</th>
+                  <th>IN MST</th>
+                </tr>
+              </thead>
+              <tbody id="edge-table-body">
+                <tr>
+                  <td
+                    colspan="4"
+                    style="color: var(--muted); text-align: center"
+                  >
+                    No edges yet
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="flex: 1; display: flex; flex-direction: column">
+          <div class="section-label">Algorithm Log</div>
+          <div class="log-area" id="log-area">
+            <span class="log-line info">// SMART CITY MST ENGINE READY</span
+            ><br />
+            <span class="log-line">// Add nodes and edges to begin</span><br />
+            <span class="log-line">// or load a preset graph</span><br />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edge Weight Modal -->
+    <div class="modal-overlay" id="edge-modal">
+      <div class="modal">
+        <h3>ADD SENSOR CONNECTION</h3>
+        <div class="form-row">
+          <label>CONNECTION COST (wiring length / units)</label>
+          <input
+            type="number"
+            id="edge-weight-input"
+            value="10"
+            min="1"
+            max="999"
+            placeholder="Enter cost..."
+          />
+        </div>
+        <div
+          style="
+            font-size: 0.7rem;
+            color: var(--muted);
+            font-family: &quot;Share Tech Mono&quot;, monospace;
+            line-height: 1.7;
+          "
+        >
+          From: <span id="modal-from" style="color: var(--accent)"></span><br />
+          To: &nbsp;&nbsp;<span
+            id="modal-to"
+            style="color: var(--accent)"
+          ></span>
+        </div>
+        <div class="modal-actions">
+          <button class="btn run" onclick="confirmEdge()">
+            ✓ Add Connection
+          </button>
+          <button class="btn danger" onclick="closeModal()">✕ Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Random Preset Modal -->
+    <div class="modal-overlay" id="random-modal">
+      <div class="modal">
+        <h3>RANDOM GRAPH PRESET</h3>
+        <div class="form-row">
+          <label>NUMBER OF SENSORS (2-12)</label>
+          <input
+            type="number"
+            id="random-nodes-input"
+            min="2"
+            max="12"
+            value="8"
+          />
+        </div>
+        <div class="form-row">
+          <label>NUMBER OF CONNECTIONS</label>
+          <input
+            type="number"
+            id="random-edges-input"
+            min="1"
+            max="20"
+            value="12"
+          />
+          <div class="helper-text" id="random-edges-help">
+            Allowed edges: 1 to 20
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="btn run" onclick="applyRandomPreset()">
+            ✓ Build Random Graph
+          </button>
+          <button class="btn danger" onclick="closeRandomPresetModal()">
+            ✕ Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ============================================================
+      // GRAPH DATA
+      // ============================================================
+      let nodes = [];
+      let edges = [];
+      let nodeIdCounter = 0;
+      let mode = "node"; // 'node' | 'edge' | 'delete'
+      let edgeStart = null;
+      let animSpeed = 600;
+      let isRunning = false;
+      let mstEdges = [];
+      let mstAlgo = "";
+      let pendingEdge = null;
+      let scale = 1,
+        offsetX = 0,
+        offsetY = 0;
+      const MAX_RANDOM_NODES = 12;
+      let suppressClick = false;
+      let panCandidate = null;
+      let panDragging = false;
+
+      const canvas = document.getElementById("network-canvas");
+      const ctx = canvas.getContext("2d");
+
+      function resizeCanvas() {
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+        draw();
+      }
+      window.addEventListener("resize", resizeCanvas);
+      setTimeout(resizeCanvas, 50);
+
+      // ============================================================
+      // DRAWING
+      // ============================================================
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.save();
+        ctx.translate(offsetX, offsetY);
+        ctx.scale(scale, scale);
+
+        // Draw grid dots
+        ctx.fillStyle = "rgba(10,58,92,0.25)";
+        const step = 40;
+        for (
+          let x = -offsetX / scale;
+          x < (canvas.width - offsetX) / scale;
+          x += step
+        ) {
+          for (
+            let y = -offsetY / scale;
+            y < (canvas.height - offsetY) / scale;
+            y += step
+          ) {
+            ctx.beginPath();
+            ctx.arc(x, y, 1, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        // Draw edges
+        edges.forEach((e) => {
+          const n1 = nodes.find((n) => n.id === e.from);
+          const n2 = nodes.find((n) => n.id === e.to);
+          if (!n1 || !n2) return;
+
+          const isMST = mstEdges.some(
+            (me) =>
+              (me.from === e.from && me.to === e.to) ||
+              (me.from === e.to && me.to === e.from),
+          );
+          const isAnimating = e.animating;
+
+          if (isMST) {
+            ctx.beginPath();
+            const grad = ctx.createLinearGradient(n1.x, n1.y, n2.x, n2.y);
+            if (mstAlgo === "kruskal") {
+              grad.addColorStop(0, "#ff6b35");
+              grad.addColorStop(1, "#ffcc00");
+            } else if (mstAlgo === "brute") {
+              grad.addColorStop(0, "#b44fff");
+              grad.addColorStop(1, "#ff4488");
+            } else {
+              grad.addColorStop(0, "#00d4ff");
+              grad.addColorStop(1, "#39ff14");
+            }
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = 3.5;
+            ctx.shadowColor =
+              mstAlgo === "kruskal"
+                ? "#ff6b35"
+                : mstAlgo === "brute"
+                  ? "#b44fff"
+                  : "#00d4ff";
+            ctx.shadowBlur = 12;
+            ctx.moveTo(n1.x, n1.y);
+            ctx.lineTo(n2.x, n2.y);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // Draw cost label
+            const mx = (n1.x + n2.x) / 2,
+              my = (n1.y + n2.y) / 2;
+            ctx.fillStyle =
+              mstAlgo === "kruskal"
+                ? "#ff6b35"
+                : mstAlgo === "brute"
+                  ? "#b44fff"
+                  : "#39ff14";
+            ctx.font = "bold 11px Orbitron";
+            ctx.textAlign = "center";
+            ctx.fillText(e.weight, mx, my - 6);
+          } else {
+            ctx.beginPath();
+            ctx.strokeStyle = "rgba(20,70,110,0.7)";
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([5, 5]);
+            ctx.moveTo(n1.x, n1.y);
+            ctx.lineTo(n2.x, n2.y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            if (isAnimating) {
+              ctx.beginPath();
+              ctx.strokeStyle = "rgba(0,212,255,0.65)";
+              ctx.lineWidth = 2.5;
+              ctx.moveTo(n1.x, n1.y);
+              ctx.lineTo(n2.x, n2.y);
+              ctx.stroke();
+            }
+
+            // Cost label
+            const mx = (n1.x + n2.x) / 2,
+              my = (n1.y + n2.y) / 2;
+            ctx.fillStyle = "rgba(74,122,155,0.9)";
+            ctx.font = "10px Share Tech Mono";
+            ctx.textAlign = "center";
+            ctx.fillText(e.weight, mx, my - 5);
+          }
+        });
+
+        // Draw nodes
+        nodes.forEach((n) => {
+          const isSelected = edgeStart === n.id;
+          const isMSTNode = mstEdges.some(
+            (e) => e.from === n.id || e.to === n.id,
+          );
+
+          // Outer glow ring
+          if (isSelected || isMSTNode) {
+            ctx.beginPath();
+            ctx.arc(n.x, n.y, 22, 0, Math.PI * 2);
+            ctx.strokeStyle = isSelected
+              ? "rgba(255,204,0,0.4)"
+              : mstAlgo === "kruskal"
+                ? "rgba(255,107,53,0.3)"
+                : "rgba(0,212,255,0.3)";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+          }
+
+          // Node circle
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, 16, 0, Math.PI * 2);
+          const g = ctx.createRadialGradient(n.x - 4, n.y - 4, 2, n.x, n.y, 16);
+          if (isSelected) {
+            g.addColorStop(0, "#806000");
+            g.addColorStop(1, "#241a00");
+          } else if (isMSTNode) {
+            if (mstAlgo === "kruskal") {
+              g.addColorStop(0, "#7a2f10");
+              g.addColorStop(1, "#1a0800");
+            } else if (mstAlgo === "brute") {
+              g.addColorStop(0, "#55168a");
+              g.addColorStop(1, "#150020");
+            } else {
+              g.addColorStop(0, "#003d50");
+              g.addColorStop(1, "#001a22");
+            }
+          } else {
+            g.addColorStop(0, "#1a3a5c");
+            g.addColorStop(1, "#050e18");
+          }
+          ctx.fillStyle = g;
+          ctx.fill();
+          ctx.strokeStyle = isSelected
+            ? "#ffcc00"
+            : isMSTNode
+              ? mstAlgo === "kruskal"
+                ? "#ff6b35"
+                : mstAlgo === "brute"
+                  ? "#b44fff"
+                  : "#00d4ff"
+              : "#1a5c80";
+          ctx.lineWidth = isSelected ? 2.5 : isMSTNode ? 2 : 1.5;
+          ctx.shadowColor = isSelected
+            ? "#ffcc00"
+            : isMSTNode
+              ? mstAlgo === "kruskal"
+                ? "#ff6b35"
+                : "#00d4ff"
+              : "transparent";
+          ctx.shadowBlur = isMSTNode || isSelected ? 10 : 0;
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+
+          // Sensor icon
+          ctx.fillStyle = isSelected
+            ? "#ffcc00"
+            : isMSTNode
+              ? mstAlgo === "kruskal"
+                ? "#ff6b35"
+                : "#00d4ff"
+              : "#4a7a9b";
+          ctx.font = "12px Arial";
+          ctx.textAlign = "center";
+          ctx.fillText("📡", n.x, n.y + 4);
+
+          // Node label
+          ctx.fillStyle = isSelected
+            ? "#ffcc00"
+            : isMSTNode
+              ? "#ffffff"
+              : "#7ab0d0";
+          ctx.font = "bold 9px Orbitron";
+          ctx.textAlign = "center";
+          ctx.fillText(n.label, n.x, n.y + 28);
+        });
+
+        ctx.restore();
+      }
+
+      // ============================================================
+      // INTERACTION
+      // ============================================================
+      canvas.addEventListener("click", (e) => {
+        if (suppressClick) {
+          suppressClick = false;
+          return;
+        }
+        if (isRunning) return;
+        const rect = canvas.getBoundingClientRect();
+        const wx = (e.clientX - rect.left - offsetX) / scale;
+        const wy = (e.clientY - rect.top - offsetY) / scale;
+
+        if (mode === "node") {
+          // Check not too close
+          for (const n of nodes) {
+            if (Math.hypot(n.x - wx, n.y - wy) < 36) {
+              log("Node too close to existing node", "warn");
+              return;
+            }
+          }
+          const label = "S" + (nodeIdCounter + 1);
+          nodes.push({ id: ++nodeIdCounter, x: wx, y: wy, label });
+          log(`Added sensor node ${label}`, "info");
+          updateCounts();
+          draw();
+        } else if (mode === "edge") {
+          const hit = getNodeAt(wx, wy);
+          if (!hit) {
+            edgeStart = null;
+            draw();
+            return;
+          }
+          if (!edgeStart) {
+            edgeStart = hit.id;
+            log(`Select target node for connection from ${hit.label}`, "info");
+            draw();
+          } else {
+            if (hit.id === edgeStart) {
+              edgeStart = null;
+              draw();
+              return;
+            }
+            if (
+              edges.some(
+                (ex) =>
+                  (ex.from === edgeStart && ex.to === hit.id) ||
+                  (ex.from === hit.id && ex.to === edgeStart),
+              )
+            ) {
+              log("Connection already exists", "warn");
+              edgeStart = null;
+              draw();
+              return;
+            }
+            pendingEdge = { from: edgeStart, to: hit.id };
+            document.getElementById("modal-from").textContent = nodes.find(
+              (n) => n.id === edgeStart,
+            ).label;
+            document.getElementById("modal-to").textContent = hit.label;
+            document.getElementById("edge-weight-input").value =
+              Math.floor(Math.random() * 50) + 5;
+            document.getElementById("edge-modal").classList.add("show");
+            edgeStart = null;
+          }
+        } else if (mode === "delete") {
+          const hit = getNodeAt(wx, wy);
+          if (hit) {
+            nodes = nodes.filter((n) => n.id !== hit.id);
+            edges = edges.filter(
+              (ex) => ex.from !== hit.id && ex.to !== hit.id,
+            );
+            mstEdges = mstEdges.filter(
+              (ex) => ex.from !== hit.id && ex.to !== hit.id,
+            );
+            log(`Deleted node ${hit.label}`, "warn");
+            updateCounts();
+            updateEdgeTable();
+            draw();
+            return;
+          }
+          const eh = getEdgeAt(wx, wy);
+          if (eh) {
+            const n1 = nodes.find((n) => n.id === eh.from),
+              n2 = nodes.find((n) => n.id === eh.to);
+            edges = edges.filter((ex) => ex !== eh);
+            mstEdges = mstEdges.filter(
+              (ex) =>
+                !(
+                  (ex.from === eh.from && ex.to === eh.to) ||
+                  (ex.from === eh.to && ex.to === eh.from)
+                ),
+            );
+            log(`Deleted edge ${n1.label}–${n2.label}`, "warn");
+            updateCounts();
+            updateEdgeTable();
+            draw();
+          }
+        }
+      });
+
+      canvas.addEventListener("mousemove", (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const wx = (e.clientX - rect.left - offsetX) / scale;
+        const wy = (e.clientY - rect.top - offsetY) / scale;
+        const tip = document.getElementById("tooltip");
+        const hit = getNodeAt(wx, wy);
+        if (hit) {
+          const deg = edges.filter(
+            (ex) => ex.from === hit.id || ex.to === hit.id,
+          ).length;
+          tip.style.display = "block";
+          tip.style.left = e.clientX - rect.left + 15 + "px";
+          tip.style.top = e.clientY - rect.top + 10 + "px";
+          tip.textContent = `${hit.label} · Connections: ${deg}`;
+        } else {
+          tip.style.display = "none";
+        }
+      });
+
+      function getNodeAt(x, y) {
+        return nodes.find((n) => Math.hypot(n.x - x, n.y - y) < 18) || null;
+      }
+      function getEdgeAt(x, y) {
+        for (const e of edges) {
+          const n1 = nodes.find((n) => n.id === e.from),
+            n2 = nodes.find((n) => n.id === e.to);
+          if (!n1 || !n2) continue;
+          const d = pointToSegmentDist(x, y, n1.x, n1.y, n2.x, n2.y);
+          if (d < 8) return e;
+        }
+        return null;
+      }
+      function pointToSegmentDist(px, py, ax, ay, bx, by) {
+        const dx = bx - ax,
+          dy = by - ay;
+        if (dx === 0 && dy === 0) return Math.hypot(px - ax, py - ay);
+        const t = Math.max(
+          0,
+          Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)),
+        );
+        return Math.hypot(px - ax - t * dx, py - ay - t * dy);
+      }
+
+      // ============================================================
+      // MODAL
+      // ============================================================
+      function confirmEdge() {
+        const w = parseInt(document.getElementById("edge-weight-input").value);
+        if (isNaN(w) || w < 1) return;
+        edges.push({
+          from: pendingEdge.from,
+          to: pendingEdge.to,
+          weight: w,
+          animating: false,
+        });
+        const n1 = nodes.find((n) => n.id === pendingEdge.from),
+          n2 = nodes.find((n) => n.id === pendingEdge.to);
+        log(`Added edge ${n1.label}–${n2.label} cost=${w}`, "edge");
+        closeModal();
+        updateCounts();
+        updateEdgeTable();
+        draw();
+      }
+      function closeModal() {
+        document.getElementById("edge-modal").classList.remove("show");
+        pendingEdge = null;
+        edgeStart = null;
+        draw();
+      }
+
+      // ============================================================
+      // ALGORITHMS
+      // ============================================================
+      async function runAlgo(algo) {
+        if (isRunning) return;
+        if (nodes.length < 2) {
+          log("Need at least 2 sensor nodes", "warn");
+          return;
+        }
+        if (edges.length < 1) {
+          log("Need at least 1 edge/connection", "warn");
+          return;
+        }
+        if (!isConnectedGraph()) {
+          log("Graph is not connected — MST not possible", "warn");
+          return;
+        }
+
+        isRunning = true;
+        mstEdges = [];
+        mstAlgo = algo;
+        clearLog();
+        document.getElementById("progress-fill").style.width = "0%";
+        document.getElementById("res-algo").textContent =
+          algo === "prim"
+            ? "PRIM'S"
+            : algo === "kruskal"
+              ? "KRUSKAL'S"
+              : "BRUTE FORCE";
+        document.getElementById("res-algo").style.color =
+          algo === "kruskal"
+            ? "var(--accent2)"
+            : algo === "brute"
+              ? "#b44fff"
+              : "var(--accent)";
+        document.getElementById("running-label").textContent = "⚡ RUNNING...";
+        document.getElementById("res-cost").textContent = "...";
+        document.getElementById("res-steps").textContent = "...";
+        document.getElementById("res-time").textContent = "...";
+
+        const t0 = performance.now();
+
+        if (algo === "prim") await primMST();
+        else if (algo === "kruskal") await kruskalMST();
+        else await bruteForceMST();
+
+        const elapsed = (performance.now() - t0).toFixed(1);
+        const totalCost = mstEdges.reduce((s, e) => s + e.weight, 0);
+
+        document.getElementById("res-cost").textContent = totalCost + " units";
+        document.getElementById("res-edges").textContent = mstEdges.length;
+        document.getElementById("res-time").textContent = elapsed + " ms";
+        document.getElementById("mst-cost-sidebar").textContent = totalCost;
+        document.getElementById("progress-fill").style.width = "100%";
+        document.getElementById("running-label").textContent = "✓ COMPLETE";
+        log(`MST COMPLETE — Total cost: ${totalCost} units`, "success");
+        updateEdgeTable();
+        isRunning = false;
+      }
+
+      // --- PRIM'S ALGORITHM ---
+      async function primMST() {
+        log("=== PRIM'S ALGORITHM ===", "info");
+        log("Data Structure: Min-Heap (Priority Queue)", "info");
+        log("Complexity: O(E log V)", "info");
+        log("", "");
+
+        const visited = new Set();
+        const start = nodes[0];
+        visited.add(start.id);
+        log(`Start node: ${start.label}`, "edge");
+
+        let step = 0;
+        while (visited.size < nodes.length) {
+          let bestEdge = null,
+            bestW = Infinity;
+
+          for (const e of edges) {
+            const fromIn = visited.has(e.from),
+              toIn = visited.has(e.to);
+            if ((fromIn && !toIn) || (!fromIn && toIn)) {
+              e.animating = true;
+              if (e.weight < bestW) {
+                bestW = e.weight;
+                bestEdge = e;
+              }
+            }
+          }
+          draw();
+          await sleep(animSpeed / 2);
+          edges.forEach((e) => (e.animating = false));
+
+          if (!bestEdge) break;
+          mstEdges.push(bestEdge);
+          visited.add(bestEdge.from);
+          visited.add(bestEdge.to);
+          const n1 = nodes.find((n) => n.id === bestEdge.from),
+            n2 = nodes.find((n) => n.id === bestEdge.to);
+          step++;
+          log(
+            `Step ${step}: Add edge ${n1.label}–${n2.label} (cost=${bestEdge.weight})`,
+            "success",
+          );
+          document.getElementById("res-steps").textContent = step;
+          document.getElementById("progress-fill").style.width =
+            (visited.size / nodes.length) * 90 + "%";
+          draw();
+          await sleep(animSpeed);
+        }
+      }
+
+      // --- KRUSKAL'S ALGORITHM ---
+      async function kruskalMST() {
+        log("=== KRUSKAL'S ALGORITHM ===", "info");
+        log("Data Structure: Union-Find (Disjoint Set)", "info");
+        log("Complexity: O(E log E)", "info");
+        log("", "");
+
+        const parent = {},
+          rank = {};
+        nodes.forEach((n) => {
+          parent[n.id] = n.id;
+          rank[n.id] = 0;
+        });
+
+        function find(x) {
+          if (parent[x] !== x) parent[x] = find(parent[x]);
+          return parent[x];
+        }
+        function union(a, b) {
+          const ra = find(a),
+            rb = find(b);
+          if (ra === rb) return false;
+          if (rank[ra] < rank[rb]) parent[ra] = rb;
+          else if (rank[ra] > rank[rb]) parent[rb] = ra;
+          else {
+            parent[rb] = ra;
+            rank[ra]++;
+          }
+          return true;
+        }
+
+        const sorted = [...edges].sort((a, b) => a.weight - b.weight);
+        log(`Sorted ${sorted.length} edges by cost`, "edge");
+        sorted.forEach((e) => {
+          const n1 = nodes.find((n) => n.id === e.from),
+            n2 = nodes.find((n) => n.id === e.to);
+          log(`  Edge ${n1.label}–${n2.label}: ${e.weight}`, "edge");
+        });
+
+        let step = 0;
+        for (const e of sorted) {
+          const n1 = nodes.find((n) => n.id === e.from),
+            n2 = nodes.find((n) => n.id === e.to);
+          e.animating = true;
+          draw();
+          await sleep(animSpeed / 2);
+          e.animating = false;
+
+          if (union(e.from, e.to)) {
+            mstEdges.push(e);
+            step++;
+            log(
+              `Step ${step}: Accept ${n1.label}–${n2.label} (cost=${e.weight}) ✓`,
+              "success",
+            );
+            document.getElementById("res-steps").textContent = step;
+            document.getElementById("progress-fill").style.width =
+              (step / (nodes.length - 1)) * 90 + "%";
+            draw();
+            await sleep(animSpeed);
+            if (mstEdges.length === nodes.length - 1) break;
+          } else {
+            log(`Reject ${n1.label}–${n2.label} (forms cycle)`, "warn");
+            draw();
+            await sleep(animSpeed / 2);
+          }
+        }
+      }
+
+      // --- BRUTE FORCE ---
+      async function bruteForceMST() {
+        log("=== BRUTE FORCE APPROACH ===", "info");
+        log("Enumerate spanning trees, find minimum", "info");
+        if (nodes.length > 8) {
+          log("WARNING: Graph too large for brute force!", "warn");
+          log("Running approximation...", "warn");
+        }
+
+        // Generate all spanning trees (Prüfer-like via DFS spanning trees)
+        const adj = {};
+        nodes.forEach((n) => (adj[n.id] = []));
+        edges.forEach((e) => {
+          adj[e.from].push({ to: e.to, e });
+          adj[e.to].push({ to: e.from, e });
+        });
+
+        let bestCost = Infinity,
+          bestTree = [];
+        let attempts = 0;
+
+        // Enumerate spanning trees via random permutations (capped)
+        const edgeCopy = [...edges];
+        const perms = generateSubsets(edgeCopy, nodes.length - 1);
+
+        for (const subset of perms) {
+          attempts++;
+          document.getElementById("res-steps").textContent = attempts;
+          if (isSpanningTree(subset)) {
+            const cost = subset.reduce((s, e) => s + e.weight, 0);
+            if (cost < bestCost) {
+              bestCost = cost;
+              bestTree = subset;
+              log(`New best tree found: cost=${cost}`, "success");
+              mstEdges = [...bestTree];
+              draw();
+              await sleep(animSpeed / 2);
+            }
+          }
+          if (attempts > 200) {
+            log("Capped at 200 iterations (large graph)", "warn");
+            break;
+          }
+          await sleep(30);
+        }
+        mstEdges = bestTree;
+      }
+
+      function generateSubsets(arr, k) {
+        const result = [];
+        function combo(start, current) {
+          if (current.length === k) {
+            result.push([...current]);
+            return;
+          }
+          for (let i = start; i < arr.length; i++) {
+            current.push(arr[i]);
+            combo(i + 1, current);
+            current.pop();
+          }
+        }
+        combo(0, []);
+        return result;
+      }
+
+      function isSpanningTree(subset) {
+        if (subset.length !== nodes.length - 1) return false;
+        const parent = {};
+        nodes.forEach((n) => (parent[n.id] = n.id));
+        function find(x) {
+          return parent[x] === x ? x : (parent[x] = find(parent[x]));
+        }
+        function union(a, b) {
+          const ra = find(a),
+            rb = find(b);
+          if (ra === rb) return false;
+          parent[ra] = rb;
+          return true;
+        }
+        for (const e of subset) {
+          if (!union(e.from, e.to)) return false;
+        }
+        const root = find(nodes[0].id);
+        return nodes.every((n) => find(n.id) === root);
+      }
+
+      function isConnectedGraph() {
+        if (nodes.length === 0) return false;
+        const visited = new Set([nodes[0].id]);
+        const queue = [nodes[0].id];
+        while (queue.length) {
+          const cur = queue.shift();
+          for (const e of edges) {
+            if (e.from === cur && !visited.has(e.to)) {
+              visited.add(e.to);
+              queue.push(e.to);
+            }
+            if (e.to === cur && !visited.has(e.from)) {
+              visited.add(e.from);
+              queue.push(e.from);
+            }
+          }
+        }
+        return visited.size === nodes.length;
+      }
+
+      // ============================================================
+      // PRESETS
+      // ============================================================
+      function loadPreset(type, options = {}) {
+        clearAll();
+        const W = canvas.width / scale,
+          H = canvas.height / scale;
+        const cx = W / 2,
+          cy = H / 2;
+
+        if (type === "city") {
+          const positions = [
+            [cx - 200, cy - 150],
+            [cx, cy - 180],
+            [cx + 200, cy - 150],
+            [cx - 220, cy],
+            [cx + 220, cy],
+            [cx - 200, cy + 150],
+            [cx, cy + 170],
+            [cx + 200, cy + 150],
+          ];
+          positions.forEach(([x, y], i) =>
+            nodes.push({ id: ++nodeIdCounter, x, y, label: "S" + (i + 1) }),
+          );
+          const edgeDefs = [
+            [1, 2, 15],
+            [2, 3, 20],
+            [1, 4, 12],
+            [2, 5, 18],
+            [3, 5, 14],
+            [4, 6, 16],
+            [4, 5, 30],
+            [5, 7, 22],
+            [6, 7, 10],
+            [7, 8, 13],
+            [5, 8, 25],
+            [6, 8, 28],
+            [3, 8, 35],
+          ];
+          edgeDefs.forEach(([f, t, w]) =>
+            edges.push({ from: f, to: t, weight: w, animating: false }),
+          );
+          log("Loaded: City Grid (8 sensors)", "info");
+        } else if (type === "star") {
+          nodes.push({ id: ++nodeIdCounter, x: cx, y: cy, label: "HUB" });
+          const r = 160;
+          for (let i = 0; i < 6; i++) {
+            const a = (i / 6) * Math.PI * 2 - Math.PI / 2;
+            nodes.push({
+              id: ++nodeIdCounter,
+              x: cx + r * Math.cos(a),
+              y: cy + r * Math.sin(a),
+              label: "S" + (i + 1),
+            });
+          }
+          for (let i = 2; i <= 7; i++)
+            edges.push({
+              from: 1,
+              to: i,
+              weight: Math.floor(Math.random() * 30) + 10,
+              animating: false,
+            });
+          edges.push(
+            { from: 2, to: 3, weight: 45 },
+            { from: 3, to: 4, weight: 38 },
+            { from: 5, to: 6, weight: 42 },
+          );
+          log("Loaded: Hub & Spoke topology", "info");
+        } else if (type === "random") {
+          const count = Math.max(
+            2,
+            Math.min(MAX_RANDOM_NODES, options.nodes || 7),
+          );
+          const minEdges = Math.max(1, count - 1);
+          const maxEdges = (count * (count - 1)) / 2;
+          const edgeCount = Math.max(
+            minEdges,
+            Math.min(options.edges || Math.round(count * 1.6), maxEdges),
+          );
+          createRandomGraph(count, edgeCount, W, H);
+          log(
+            `Loaded: Random sensor network (${count} nodes, ${edgeCount} edges)`,
+            "info",
+          );
+        }
+
+        updateCounts();
+        updateEdgeTable();
+        draw();
+      }
+
+      // ============================================================
+      // UTILS
+      // ============================================================
+      function setMode(m) {
+        mode = m;
+        edgeStart = null;
+        ["btn-add-node", "btn-add-edge"].forEach((id) =>
+          document.getElementById(id).classList.remove("active"),
+        );
+        if (m === "node")
+          document.getElementById("btn-add-node").classList.add("active");
+        if (m === "edge")
+          document.getElementById("btn-add-edge").classList.add("active");
+        document.getElementById("mode-display").textContent = m
+          .toUpperCase()
+          .replace("NODE", "ADD NODE")
+          .replace("EDGE", "ADD CONNECTION")
+          .replace("DELETE", "DELETE");
+        const hints = {
+          node: "Click canvas to place sensor nodes",
+          edge: "Click two nodes to connect them",
+          delete: "Click node or edge to delete",
+        };
+        document.getElementById("canvas-hint").textContent = hints[m] || "";
+        draw();
+      }
+
+      function resetMST() {
+        mstEdges = [];
+        mstAlgo = "";
+        document.getElementById("running-label").textContent = "";
+        document.getElementById("res-cost").textContent = "—";
+        document.getElementById("res-edges").textContent = "—";
+        document.getElementById("res-algo").textContent = "—";
+        document.getElementById("res-time").textContent = "—";
+        document.getElementById("res-steps").textContent = "—";
+        document.getElementById("mst-cost-sidebar").textContent = "—";
+        document.getElementById("progress-fill").style.width = "0%";
+        updateEdgeTable();
+        draw();
+      }
+      function clearAll() {
+        nodes = [];
+        edges = [];
+        mstEdges = [];
+        nodeIdCounter = 0;
+        edgeStart = null;
+        isRunning = false;
+        resetMST();
+        clearLog();
+        log("Graph cleared", "warn");
+        updateCounts();
+        draw();
+      }
+      function updateCounts() {
+        document.getElementById("node-count").textContent = nodes.length;
+        document.getElementById("edge-count").textContent = edges.length;
+      }
+      function updateEdgeTable() {
+        const tbody = document.getElementById("edge-table-body");
+        if (edges.length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:10px;">No edges yet</td></tr>';
+          return;
+        }
+        tbody.innerHTML = edges
+          .map((e) => {
+            const n1 = nodes.find((n) => n.id === e.from),
+              n2 = nodes.find((n) => n.id === e.to);
+            const isMST = mstEdges.some(
+              (me) =>
+                (me.from === e.from && me.to === e.to) ||
+                (me.from === e.to && me.to === e.from),
+            );
+            return `<tr class="${isMST ? "mst-edge" + (mstAlgo === "kruskal" ? " kruskal" : "") : ""}">
+      <td>${n1 ? n1.label : "?"}</td><td>${n2 ? n2.label : "?"}</td><td>${e.weight}</td>
+      <td>${isMST ? "✓" : ""}</td>
+    </tr>`;
+          })
+          .join("");
+      }
+
+      function log(msg, type = "") {
+        const area = document.getElementById("log-area");
+        const span = document.createElement("span");
+        span.className = "log-line " + type;
+        span.textContent = "> " + msg;
+        area.appendChild(span);
+        area.appendChild(document.createElement("br"));
+        area.scrollTop = area.scrollHeight;
+      }
+      function clearLog() {
+        document.getElementById("log-area").innerHTML = "";
+      }
+
+      function sleep(ms) {
+        return new Promise((r) => setTimeout(r, ms));
+      }
+
+      function openRandomPresetModal() {
+        const nodeInput = document.getElementById("random-nodes-input");
+        const edgeInput = document.getElementById("random-edges-input");
+        nodeInput.value = Math.min(8, MAX_RANDOM_NODES);
+        edgeInput.value = 12;
+        updateRandomPresetLimits();
+        document.getElementById("random-modal").classList.add("show");
+      }
+      function closeRandomPresetModal() {
+        document.getElementById("random-modal").classList.remove("show");
+      }
+      function updateRandomPresetLimits() {
+        const nodeInput = document.getElementById("random-nodes-input");
+        const edgeInput = document.getElementById("random-edges-input");
+        let n = parseInt(nodeInput.value);
+        if (isNaN(n)) n = 2;
+        n = Math.max(2, Math.min(MAX_RANDOM_NODES, n));
+        nodeInput.value = n;
+        const minEdges = Math.max(1, n - 1);
+        const maxEdges = (n * (n - 1)) / 2;
+        edgeInput.min = minEdges;
+        edgeInput.max = maxEdges;
+        let e = parseInt(edgeInput.value);
+        if (isNaN(e)) e = minEdges;
+        e = Math.max(minEdges, Math.min(maxEdges, e));
+        edgeInput.value = e;
+        document.getElementById("random-edges-help").textContent =
+          `Allowed edges: ${minEdges} to ${maxEdges}`;
+      }
+      function applyRandomPreset() {
+        updateRandomPresetLimits();
+        const n = parseInt(document.getElementById("random-nodes-input").value);
+        const e = parseInt(document.getElementById("random-edges-input").value);
+        closeRandomPresetModal();
+        loadPreset("random", { nodes: n, edges: e });
+      }
+
+      function createRandomGraph(count, edgeCount, W, H) {
+        const marginX = 80,
+          marginY = 70,
+          minDist = 40;
+        const positions = [];
+        for (let i = 0; i < count; i++) {
+          let placed = false;
+          for (let attempt = 0; attempt < 40; attempt++) {
+            const x = marginX + Math.random() * (W - marginX * 2);
+            const y = marginY + Math.random() * (H - marginY * 2);
+            if (
+              positions.every((p) => Math.hypot(p.x - x, p.y - y) > minDist)
+            ) {
+              positions.push({ x, y });
+              placed = true;
+              break;
+            }
+          }
+          if (!placed)
+            positions.push({
+              x: marginX + Math.random() * (W - marginX * 2),
+              y: marginY + Math.random() * (H - marginY * 2),
+            });
+        }
+
+        positions.forEach((p, i) =>
+          nodes.push({
+            id: ++nodeIdCounter,
+            x: p.x,
+            y: p.y,
+            label: "S" + (i + 1),
+          }),
+        );
+
+        const edgeSet = new Set();
+        const addEdge = (a, b) => {
+          const key = a < b ? `${a}-${b}` : `${b}-${a}`;
+          if (edgeSet.has(key)) return false;
+          edgeSet.add(key);
+          edges.push({
+            from: a,
+            to: b,
+            weight: Math.floor(Math.random() * 60) + 5,
+            animating: false,
+          });
+          return true;
+        };
+
+        for (let i = 1; i < nodes.length; i++) {
+          const target = Math.floor(Math.random() * i);
+          addEdge(nodes[i].id, nodes[target].id);
+        }
+
+        const pairs = [];
+        for (let i = 0; i < nodes.length; i++) {
+          for (let j = i + 1; j < nodes.length; j++) {
+            const a = nodes[i].id,
+              b = nodes[j].id;
+            const key = a < b ? `${a}-${b}` : `${b}-${a}`;
+            if (!edgeSet.has(key)) pairs.push([a, b]);
+          }
+        }
+
+        while (edges.length < edgeCount && pairs.length > 0) {
+          const idx = Math.floor(Math.random() * pairs.length);
+          const [a, b] = pairs.splice(idx, 1)[0];
+          addEdge(a, b);
+        }
+      }
+
+      function zoomIn() {
+        scale = Math.min(scale * 1.2, 3);
+        draw();
+      }
+      function zoomOut() {
+        scale = Math.max(scale / 1.2, 0.3);
+        draw();
+      }
+      function resetZoom() {
+        scale = 1;
+        offsetX = 0;
+        offsetY = 0;
+        draw();
+      }
+
+      // Zoom with wheel
+      canvas.addEventListener(
+        "wheel",
+        (e) => {
+          e.preventDefault();
+          const rect = canvas.getBoundingClientRect();
+          const mx = e.clientX - rect.left,
+            my = e.clientY - rect.top;
+          const factor = e.deltaY < 0 ? 1.12 : 0.88;
+          const newScale = Math.max(0.3, Math.min(3, scale * factor));
+          offsetX = mx - (mx - offsetX) * (newScale / scale);
+          offsetY = my - (my - offsetY) * (newScale / scale);
+          scale = newScale;
+          draw();
+        },
+        { passive: false },
+      );
+
+      function startPan(e) {
+        panCandidate = { x: e.clientX, y: e.clientY, offsetX, offsetY };
+        panDragging = false;
+      }
+      function updatePan(e) {
+        if (!panCandidate) return;
+        const dx = e.clientX - panCandidate.x;
+        const dy = e.clientY - panCandidate.y;
+        if (!panDragging && Math.hypot(dx, dy) > 4) panDragging = true;
+        if (panDragging) {
+          offsetX = panCandidate.offsetX + dx;
+          offsetY = panCandidate.offsetY + dy;
+          draw();
+        }
+      }
+      function endPan() {
+        if (panCandidate && panDragging) suppressClick = true;
+        panCandidate = null;
+        panDragging = false;
+      }
+
+      canvas.addEventListener("mousedown", (e) => {
+        if (e.button === 1 || (e.button === 0 && e.altKey)) {
+          startPan(e);
+          e.preventDefault();
+          return;
+        }
+        if (e.button !== 0) return;
+        const rect = canvas.getBoundingClientRect();
+        const wx = (e.clientX - rect.left - offsetX) / scale;
+        const wy = (e.clientY - rect.top - offsetY) / scale;
+        if (getNodeAt(wx, wy) || getEdgeAt(wx, wy)) return;
+        startPan(e);
+      });
+      canvas.addEventListener("mousemove", updatePan);
+      canvas.addEventListener("mouseup", endPan);
+      canvas.addEventListener("mouseleave", endPan);
+
+      document
+        .getElementById("random-nodes-input")
+        .addEventListener("input", updateRandomPresetLimits);
+      document
+        .getElementById("random-edges-input")
+        .addEventListener("input", updateRandomPresetLimits);
+
+      // Load default preset after init
+      setTimeout(() => {
+        loadPreset("city");
+      }, 200);
+    </script>
+  </body>
+</html>
